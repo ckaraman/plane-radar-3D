@@ -19,5 +19,4 @@ jobs:
           export PATH="$HOME/pio-s3/bin:$PATH"
           export PLATFORMIO_CORE_DIR="$HOME/.pio-core-s3"
           pio run -e ws5 -t merge > build.log 2>&1 || { echo "::error title=build::$(grep -E 'error|\*\*\*' build.log | tail -n 15 | tr '\n' '|')"; exit 1; }
-          cfg=$(grep -h -E "CONFIG_SPIRAM_MODE_|CONFIG_SPIRAM_SPEED |CONFIG_ESPTOOLPY_FLASHMODE|FLASHSIZE \"|DATA_CACHE_LINE_SIZE |XIP_FROM_PSRAM|SPIRAM_BOOT_INIT|TRY_ALLOCATE_WIFI" $(find .pio/build/ws5 -name sdkconfig.h) | sort -u | tr '\n' '|')
-          echo "::notice title=sdkconfig::$cfg"
+          for f in $(find .pio/build/ws5 "$PLATFORMIO_CORE_DIR/packages/framework-arduinoespressif32-libs" -name sdkconfig.h -newer platformio.ini); do echo "::notice title=$f::$(grep -E 'SPIRAM|FLASHMODE|FLASHSIZE "|CACHE_LINE_SIZE |CACHE_SIZE ' $f | sed 's/#define CONFIG_//' | tr '\n' '|')"; done
