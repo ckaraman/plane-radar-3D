@@ -16,7 +16,8 @@ jobs:
       - name: Build
         run: |
           python -m venv "$HOME/pio-s3"
-          "$HOME/pio-s3/bin/pip" install platformio "click<8.2"
+          "$HOME/pio-s3/bin/pip" install platformio "click<8.2" uv
+          export PATH="$HOME/pio-s3/bin:$PATH"
           export PLATFORMIO_CORE_DIR="$HOME/.pio-core-s3"
           set -o pipefail
           if ! "$HOME/pio-s3/bin/pio" run -e ws5 -t merge 2>&1 | tee build.log; then
