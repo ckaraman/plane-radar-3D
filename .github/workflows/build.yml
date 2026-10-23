@@ -16,7 +16,7 @@ jobs:
       - name: Build
         run: |
           python -m venv "$HOME/pio-s3"
-          "$HOME/pio-s3/bin/pip" install platformio "click<8.2" uv
+          "$HOME/pio-s3/bin/pip" install "platformio==6.1.18" "click<8.2" uv
           export PATH="$HOME/pio-s3/bin:$PATH"
           export PLATFORMIO_CORE_DIR="$HOME/.pio-core-s3"
           set -o pipefail
