@@ -1,21 +1,26 @@
-# 5" branch: the firmware and the setup page are built and published by the workflow
-# on main (it builds both branches into one site). A push here just starts that run.
+# Test branch: build the 5" firmware with the rebuilt (custom sdkconfig) Arduino libs.
 name: Build
-
 on:
   push:
-    branches: [ws5]
-  workflow_dispatch:
-
+    branches: [ws5-hyb]
 permissions:
-  actions: write
   contents: read
-
 jobs:
-  start-main-build:
+  ws5:
     runs-on: ubuntu-latest
     steps:
-      - name: Run the main build (4" + 5" firmware, setup page)
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run build.yml --repo "$GITHUB_REPOSITORY" --ref main
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build
+        run: |
+          python -m venv "$HOME/pio-s3"
+          "$HOME/pio-s3/bin/pip" install --upgrade platformio "click<8.2"
+          export PLATFORMIO_CORE_DIR="$HOME/.pio-core-s3"
+          "$HOME/pio-s3/bin/pio" run -e ws5 -t merge
+          grep -E "DATA_CACHE_LINE_SIZE|SPIRAM_XIP_FROM_PSRAM|TRY_ALLOCATE_WIFI" -r "$PLATFORMIO_CORE_DIR/packages/framework-arduinoespressif32-libs/esp32s3/"*/include/sdkconfig.h | head || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ws5
+          path: .pio/build/ws5/*.bin
