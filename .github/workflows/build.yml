@@ -1,21 +1,23 @@
-# 5" branch: the firmware and the setup page are built and published by the workflow
-# on main (it builds both branches into one site). A push here just starts that run.
 name: Build
-
 on:
   push:
-    branches: [ws5]
-  workflow_dispatch:
-
+    branches: [ws5-hyb2]
 permissions:
-  actions: write
   contents: read
-
 jobs:
-  start-main-build:
+  ws5:
     runs-on: ubuntu-latest
     steps:
-      - name: Run the main build (4" + 5" firmware, setup page)
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run build.yml --repo "$GITHUB_REPOSITORY" --ref main
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build
+        run: |
+          python -m venv "$HOME/pio-s3"
+          "$HOME/pio-s3/bin/pip" install "platformio==6.1.18" "click<8.2" uv
+          export PATH="$HOME/pio-s3/bin:$PATH"
+          export PLATFORMIO_CORE_DIR="$HOME/.pio-core-s3"
+          pio run -e ws5 -t merge > build.log 2>&1 || { echo "::error title=build::$(grep -E 'error|\*\*\*' build.log | tail -n 15 | tr '\n' '|')"; exit 1; }
+          cfg=$(grep -h -E "CONFIG_SPIRAM_MODE_|CONFIG_SPIRAM_SPEED |CONFIG_ESPTOOLPY_FLASHMODE|FLASHSIZE \"|DATA_CACHE_LINE_SIZE |XIP_FROM_PSRAM|SPIRAM_BOOT_INIT|TRY_ALLOCATE_WIFI" $(find .pio/build/ws5 -name sdkconfig.h) | sort -u | tr '\n' '|')
+          echo "::notice title=sdkconfig::$cfg"
