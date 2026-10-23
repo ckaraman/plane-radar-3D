@@ -20,3 +20,12 @@ jobs:
           export PLATFORMIO_CORE_DIR="$HOME/.pio-core-s3"
           pio run -e ws5 -t merge > build.log 2>&1 || { echo "::error title=build::$(grep -E 'error|\*\*\*' build.log | tail -n 15 | tr '\n' '|')"; exit 1; }
           for f in $(find .pio/build/ws5 "$PLATFORMIO_CORE_DIR/packages/framework-arduinoespressif32-libs" -name sdkconfig.h -newer platformio.ini); do echo "::notice title=$f::$(grep -E 'SPIRAM|FLASHMODE|FLASHSIZE "|CACHE_LINE_SIZE |CACHE_SIZE ' $f | sed 's/#define CONFIG_//' | tr '\n' '|')"; done
+      - name: Diff against prebuilt
+        run: |
+          curl -sSfL -o libs.zip https://github.com/espressif/esp32-arduino-lib-builder/releases/download/idf-release_v5.5/esp32-arduino-libs-idf-release_v5.5-b66b5448-v1.zip
+          unzip -q -j libs.zip 'esp32s3/qio_opi/include/sdkconfig.h' -d pre
+          norm() { grep '^#define CONFIG_' "$1" | sed 's/#define //' | sort; }
+          norm pre/sdkconfig.h > a.txt
+          norm .pio/build/ws5/config/sdkconfig.h > b.txt
+          d=$(diff a.txt b.txt | grep '^[<>]' | grep -v 'COMPONENT\|_VERSION\|BT_\|BLE_\|ZB_\|OPENTHREAD\|RMAKER\|INSIGHTS\|DIAG\|ESP_SR\|SR_\|MODEM\|PROV' | head -n 120 | tr '\n' '|')
+          echo "::notice title=diff::$d"
