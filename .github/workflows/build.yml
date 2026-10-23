@@ -23,7 +23,9 @@ jobs:
       - name: Diff against prebuilt
         run: |
           curl -sSfL -o libs.zip https://github.com/espressif/esp32-arduino-lib-builder/releases/download/idf-release_v5.5/esp32-arduino-libs-idf-release_v5.5-b66b5448-v1.zip
-          unzip -q -j libs.zip 'esp32s3/qio_opi/include/sdkconfig.h' -d pre
+          f=$(unzip -l libs.zip | awk '{print $4}' | grep 'esp32s3/qio_opi/include/sdkconfig.h$' | head -n1)
+          echo "::notice title=path::$f"
+          unzip -q -j libs.zip "$f" -d pre
           norm() { grep '^#define CONFIG_' "$1" | sed 's/#define //' | sort; }
           norm pre/sdkconfig.h > a.txt
           norm .pio/build/ws5/config/sdkconfig.h > b.txt
