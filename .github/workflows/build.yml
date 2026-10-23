@@ -25,7 +25,7 @@ jobs:
             echo "::error title=build tail::$msg"
             exit 1
           fi
-          "$HOME/pio-s3/bin/pio" run -e ws5b -t merge > b.log 2>&1 || { echo "::error title=ws5b::$(grep -E 'undefined reference|error|\*\*\*|overflow|multiple definition' b.log | head -n 20 | cut -c1-300 | tr '\n' '|')"; exit 1; }
+          "$HOME/pio-s3/bin/pio" run -e ws5b -t merge > b.log 2>&1 || { echo "::error title=ws5b::$(grep -B12 'collect2' b.log | grep -v '^Compiling\|^Archiving' | cut -c1-400 | tr '\n' '|')"; exit 1; }
           cfg=$(find . "$PLATFORMIO_CORE_DIR" -name sdkconfig.h 2>/dev/null | xargs grep -h -E "DATA_CACHE_LINE_SIZE |SPIRAM_XIP_FROM_PSRAM|TRY_ALLOCATE_WIFI|SPIRAM_SPEED |DATA_CACHE_SIZE |LCD_RGB_ISR_IRAM" 2>/dev/null | sort | uniq -c | tr '\n' '|')
           echo "::notice title=sdkconfig::$cfg"
           echo "::notice title=size::$(grep -E 'RAM:|Flash:' build.log | tr '\n' '|')"
