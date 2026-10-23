@@ -20,7 +20,7 @@ jobs:
           export PLATFORMIO_CORE_DIR="$HOME/.pio-core-s3"
           set -o pipefail
           if ! "$HOME/pio-s3/bin/pio" run -e ws5 -t merge 2>&1 | tee build.log; then
-            msg=$(grep -E "error|\*\*\*|FAILED|undefined reference|fatal" build.log | grep -v "Werror\|-Wno-error" | tail -n 40 | cut -c1-240 | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
+            msg=$( (grep -n -B3 -A8 "CMake Error\|Error 127\|not found" build.log | grep -v "^[0-9]*-Compiling" | head -n 60; grep -E "error:|\*\*\*" build.log | tail -n 10) | cut -c1-240 | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
             echo "::error title=build tail::$msg"
             exit 1
           fi
